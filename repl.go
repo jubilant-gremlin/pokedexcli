@@ -29,10 +29,10 @@ func startPokedex() {
             fmt.Println("ERROR: Unknown command")
             continue
         } else {
-            err := command.callback()
+            err := command.callback(command.config)
             if err != nil {
                 fmt.Println("ERROR: cannot perform command")
-                fmt.Printf("DETAILS: %w", err)
+                fmt.Printf("DETAILS: %v\n", err)
             }
             continue
         }
@@ -49,7 +49,13 @@ func CleanInput(text string) []string {
 type cliCommand struct {
     name string
     description string
-    callback func() error
+    callback func(config Config) error
+    config Config
+}
+
+type Config struct {
+    NextUrl string
+    PrevUrl *string
 }
 
 func initializeCommands() map[string]cliCommand {
@@ -58,24 +64,28 @@ func initializeCommands() map[string]cliCommand {
                 name: "exit", 
                 description: "Exit the pokedex.", 
                 callback: commandExit,
+                config: configExit,
             },
             "help": {
                 name: "help",
                 description: "Displays a help message.",
                 callback: commandHelp,
+                config: configHelp,
             },
-           /* "map": {
+            "map": {
                 name: "map", 
                 description: `Displays 20 location areas. Each subsequent call 
-            displays the next 20 locations.`,
+     displays the next 20 locations.`,
                 callback: commandMap,
+                config: configMap,
             },
             "mapb": {
                 name: "mapb",
                 description: `Displays the location areas from the previous 
-            page. If user is on the first page, displays that to the user.`,
+      page. If user is on the first page, displays that to the user.`,
                 callback: commandMapb,
-            }, */
+                config: configMap,
+            },
         }
 }
 

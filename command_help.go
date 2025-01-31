@@ -4,7 +4,12 @@ import (
     "fmt"
 )
 
-func commandHelp() error {
+var configHelp Config = Config{
+    NextUrl: "",
+    PrevUrl: nil,
+}
+
+func commandHelp(config Config) error {
     fmt.Println("Welcome to the Pokedex!")
     fmt.Println("Usage:")
     fmt.Println("")
