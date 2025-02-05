@@ -1,84 +1,45 @@
 package main
 
 import (
-    "fmt"
-    "net/http"
-    "io"
-    "encoding/json"
     "errors"
+    "fmt"
+    "github.com/jubilant-gremlin/pokedexcli/internal/pokeapi"
 )
 
-var configMap Config = Config{
-    NextUrl: "",
-    PrevUrl: nil,
-}
-
-func commandMap(config Config) error {
-    if config.NextUrl == "" {
-        config.NextUrl = "https://pokeapi.co/api/v2/location-area/"
+func commandMap(cfg *Config) error {     
+    fullURL := pokeapi.BaseURL + "/location-area"
+    if cfg.NextUrl == "" {
+        cfg.NextUrl = fullURL
     }
-    res, err := http.Get(config.NextUrl)
+    locs, err := cfg.pokeapiClient.ListLocations(&cfg.NextUrl)
     if err != nil {
-        fmt.Println("ERROR: could not get response")
-        return err
-    }
-    defer res.Body.Close()
-    
-
-    body, err := io.ReadAll(res.Body)
-    if err != nil {
-        fmt.Println("ERROR: could not read response")
         return err
     }
 
-    list := resourceList{}
-    err = json.Unmarshal(body, &list)
-    if err != nil {
-        fmt.Println("ERROR: could not unmarshal response body")
-        return err
-    }
+    cfg.NextUrl = locs.Next
+    cfg.PrevUrl = locs.Previous
 
-    for _, loc := range list.Results {
+    for _, loc := range locs.Results {
         fmt.Println(loc.Name)
     }
-
-    configMap.NextUrl = list.Next
-    configMap.PrevUrl = list.Previous
-
     return nil
 }
 
-func commandMapb(config Config) error {
-    if config.PrevUrl == nil {
-        err := errors.New("You're on the first page")
-        fmt.Println(err)
-        return err
+func commandMapb(cfg *Config) error {
+    if cfg.PrevUrl == nil {
+        return errors.New("you're on the first page")
     }
-    res, err := http.Get(*config.PrevUrl)
-    if err != nil {
-        fmt.Println("ERROR: could not get a response")
-        return err
-    }
-    defer res.Body.Close()
 
-    body, err := io.ReadAll(res.Body)
+    locs, err := cfg.pokeapiClient.ListLocations(cfg.PrevUrl)
     if err != nil {
-        fmt.Println("ERROR: could not read response")
         return err
     }
 
-    list := resourceList{}
-    err = json.Unmarshal(body, &list)
-    if err != nil {
-        fmt.Println("ERROR: could not unmarshal response body")
-        return err
-    }
+    cfg.NextUrl = locs.Next
+    cfg.PrevUrl = locs.Previous
 
-    for _, loc := range list.Results {
+    for _, loc := range locs.Results {
         fmt.Println(loc.Name)
     }
-
-    configMap.PrevUrl = list.Previous
-    configMap.NextUrl = list.Next
     return nil
 }

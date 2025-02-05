@@ -5,11 +5,7 @@ import (
     "os"
 )
 
-var configExit Config = Config {
-    NextUrl: "",
-    PrevUrl: nil,
-}
-func commandExit(config Config) error {
+func commandExit(cfg *Config) error {
     fmt.Println("Closing the Pokedex... Goodbye!")
     os.Exit(0)
     return nil
