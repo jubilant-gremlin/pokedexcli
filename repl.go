@@ -6,6 +6,7 @@ import (
     "os"
     "bufio"
     "github.com/jubilant-gremlin/pokedexcli/internal/pokeapi"
+    "github.com/jubilant-gremlin/pokedexcli/internal/pokedex"
 )
 
 func startPokedex(cfg *Config) {
@@ -29,16 +30,34 @@ func startPokedex(cfg *Config) {
         if !ok {
             fmt.Println("ERROR: Unknown command")
             continue
-        } else {
-            err := command.callback(cfg)
-            if err != nil {
-                fmt.Println("ERROR: cannot perform command")
-                fmt.Printf("DETAILS: %v\n", err)
+        }
+
+        // set area name if needed
+        if command.name == "explore" {
+            if len(list) <= 1 {
+                fmt.Println("ERROR: must specify location name to use explore command")
+                continue
             }
-            continue
+            cfg.AreaName = list[1]
+        }
+
+        // set poke name if needed
+        if command.name == "catch" || command.name == "inspect" {
+            if len(list) <= 1 {
+                fmt.Println("ERROR: must specify pokemon")
+                continue
+            }
+            cfg.PokeName = list[1]
+        }
+
+        err := command.callback(cfg)
+        if err != nil {
+            fmt.Println("ERROR: cannot perform command")
+            fmt.Printf("DETAILS: %v\n", err)
+        }
+        continue
         }
     }
-}
 
 
 func CleanInput(text string) []string {
@@ -57,6 +76,9 @@ type Config struct {
     NextUrl string
     PrevUrl *string
     pokeapiClient pokeapi.Client
+    AreaName string
+    PokeName string
+    dex pokedex.Pokedex
 }
 
 func initializeCommands() map[string]cliCommand {
@@ -83,6 +105,31 @@ func initializeCommands() map[string]cliCommand {
       page. If user is on the first page, displays that to the user.`,
                 callback: commandMapb,
             },
+            "explore": {
+                name: "explore",
+                description: `Given "explore <area name>" as a command, prints
+        a list of pokemon located in that area.`,
+                callback: commandExplore,
+            },
+            "catch": {
+                name: "catch",
+                description: `Given "catch <pokemon name> as a command, attempts
+        to catch the pokemon. Chance of catching the pokemon is determined by pokemon
+        base experience. The higher the base experience, the harder the pokemon is to catch`,
+                callback: commandCatch,
+            },
+            "inspect": {
+                name: "inspect",
+                description: `Given "inspect <pokemon name> as a command, displays
+        details about a pokemon if you have caught it before`,
+                callback: commandInspect,
+            },
+            "pokedex": {
+                name: "pokedex",
+                description: "Displays a list of pokemon the user has caught this session",
+                callback: commandPokedex,
+            },
+
         }
 }
 
